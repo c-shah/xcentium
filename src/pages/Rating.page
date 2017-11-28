@@ -1,0 +1,248 @@
+<!--
+ - Created by chshah on 11/22/2017.
+ -->
+
+<apex:page id="Rating" controller="RatingController" applyHtmlTag="false" applyBodyTag="false" sideBar="false" showHeader="false">
+    <html>
+        <header>
+            <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"/>
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+            <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"/>
+        </header>
+        <body>
+            <div class="pageContainer">
+                <div class="headerSection">
+                    Rating Service
+                </div>
+                <div class="addressContainer">
+                    <div class="fromAddressContainer">
+                        <div class="fromHeader">From Address</div>
+                        <input class="addressLine1" placeholder="Address Line 1" id="from.line1"/>
+                        <input class="city" placeholder="City" id="from.city"/>
+                        <input class="state" placeholder="State" id="from.state"/>
+                        <input class="postalCode" placeholder="Postal Code" id="from.postalCode"/>
+                        <input class="country" placeholder="Country" id="from.country"/>
+                    </div>
+                    <div class="toAddressContainer">
+                        <div class="toHeader">To Address</div>
+                        <input class="addressLine1" placeholder="Address Line 1" id="to.line1"/>
+                        <input class="city" placeholder="City" id="to.city"/>
+                        <input class="state" placeholder="State" id="to.state"/>
+                        <input class="postalCode" placeholder="Postal Code" id="to.postalCode"/>
+                        <input class="country" placeholder="Country" id="to.country"/>
+                    </div>
+                </div>
+                <div class="weightContainer">
+                    <div class="weightLabelContainer">Item Weight</div>
+                    <div class="weightInputContainer">
+                        <input class="itemWeight" placeholder="" id="item.weight"/> LB
+                    </div>
+                </div>
+                <div class="commandButtonContainer">
+                    <button id='calculateButton' class="calculateButton" onclick="callRatingService()">Calculate</button>
+                </div>
+                <div class="allResponseContainer">
+                    <div id='responseContainer' class="responseContainer">
+                    </div>
+                    <div id='errorResponseContainer' class="errorResponseContainer">
+                    </div>
+                </div>
+                <div id='processingContainer' class="processingContainer">
+
+                </div>
+            </div>
+        </body>
+        <script>
+            function callRatingService() {
+                var itemWeight = document.getElementById('item.weight').value;
+                var fromLine1 = document.getElementById('from.line1').value;
+                var fromCity = document.getElementById('from.city').value;
+                var fromState = document.getElementById('from.state').value;
+                var fromZip = document.getElementById('from.postalCode').value;
+                var fromCountry = document.getElementById('from.country').value;
+                var toLine1 = document.getElementById('to.line1').value;
+                var toCity = document.getElementById('to.city').value;
+                var toState = document.getElementById('to.state').value;
+                var toZip = document.getElementById('to.postalCode').value;
+                var toCountry = document.getElementById('to.country').value;
+                document.getElementById('calculateButton').disabled  = true;
+                console.log( ' itemWeight ' + itemWeight );
+                document.getElementById("responseContainer").innerHTML = '';
+                document.getElementById("errorResponseContainer").innerHTML = '';
+                document.getElementById("processingContainer").innerHTML = 'Processing...';
+                Visualforce.remoting.timeout = 1200000;
+                Visualforce.remoting.Manager.invokeAction( '{!$RemoteAction.RatingController.getRates}',
+                        fromLine1, fromCity, fromState, fromZip, fromCountry,
+                        toLine1, toCity, toState, toZip, toCountry, itemWeight,
+                        handleResult
+                );
+            }
+
+            function handleResult(result, event) {
+                console.log( ' result ' + result + ' event ' + event );
+                document.getElementById("processingContainer").innerHTML = '';
+                console.log( event );
+                document.getElementById('calculateButton').disabled  = false;
+                var successResponses = '<div class="responseHeader">Success</div>';
+                var errorResponses = '<div class="responseHeader">Errors</div>';
+                if( result ) {
+                    result.forEach( function(rate) {
+                        if( rate.isError == false ) {
+                            successResponses += '<div class="response">\n' +
+                                    '\t<div class="responseServiceType">' + rate.serviceType + '</div>\n' +
+                                    '\t<div class="responseRate">' + rate.amount + '</div>\n' +
+                                    '</div>';
+                        } else {
+                            errorResponses += '<div class="response">\n' +
+                                    '\t<div class="responseServiceType">' + rate.serviceType + '</div>\n' +
+                                    '\t<div class="errorMessage">' + rate.message + '</div>\n' +
+                                    '</div>';
+                        }
+                    });
+                } else {
+                    errorResponses += '<div class="response">\n' +
+                            '\t<div class="responseServiceType">' + '' + '</div>\n' +
+                            '\t<div class="errorMessage">' + event.message + '</div>\n' +
+                            '</div>';
+                }
+
+                document.getElementById("responseContainer").innerHTML = successResponses;
+                document.getElementById("errorResponseContainer").innerHTML = errorResponses;
+            }
+        </script>
+
+        <style>
+            .pageContainer {
+                margin: 20px;
+            }
+            .headerSection {
+                padding-bottom: 40px;
+                font-size: 30px;
+                display: block;
+                font-weight: bold;
+            }
+            .addressLine1 {
+                display:block;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                margin-left: 5px;
+                width: 240px;
+            }
+            .city {
+                display:block;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                margin-left: 5px;
+                width: 240px;
+            }
+            .state {
+                margin: 5px;
+                width: 110px;
+            }
+            .postalCode {
+                margin: 5px;
+                width: 110px;
+            }
+            .country {
+                display:block;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                margin-left: 5px;
+                width: 240px;
+            }
+            .addressContainer {
+                margin: 20px;
+                display:inline-block;
+            }
+            .fromAddressContainer {
+                float: left;
+                display: inline;
+            }
+            .toAddressContainer {
+                display: inline;
+                float: right;
+                margin-left: 100px;
+            }
+            .fromHeader, .toHeader {
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }
+            .weightContainer {
+                margin-top: 10px;
+                margin-left: 20px;
+                margin-bottom: 20px;
+            }
+            .weightLabelContainer {
+                font-size: 20px;
+                font-weight: bold;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .itemWeight {
+                margin: 5px;
+                width: 40px;
+            }
+            .commandButtonContainer {
+                margin-left: 20px;
+                margin-top: 10px;
+            }
+            .calculateButton {
+                padding-left: 10px;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                padding-right: 10px;
+            }
+            .allResponseContainer {
+                display: table-row;
+            }
+            .responseContainer, .errorResponseContainer {
+                margin-left: 20px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+                padding-left : 100px;
+                padding-top: 20px;
+                display: table-cell;
+            }
+            .responseHeader {
+                font-size: large;
+                font-weight: bold;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+            .response {
+                display: block;
+                padding: 10px;
+                display: table-row;
+            }
+            .responseServiceType {
+                font-weight: bold;
+                font-size: 15px;
+                display: table-cell;
+                padding-right: 20px;
+                padding-bottom: 10px;
+            }
+            .responseRate {
+                font-size: 15px;
+                display: table-cell;
+            }
+            .errorContainer {
+                margin-left: 20px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .errorMessage {
+                font-weight: bold;
+                font-size: 15px;
+                color: red;
+            }
+            .processingContainer {
+                margin-top: 20px;
+                padding-top: 20px;
+                margin-left: 20px;
+                font-size: x-large;
+                font-weight: bold;
+            }
+        </style>
+    </html>
+</apex:page>
